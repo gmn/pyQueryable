@@ -284,6 +284,11 @@ class db_object:
     def find(self, match):
         return self.do_query(self._data, match)
 
+    def clear(self):
+        self._id = 0
+        self._data = []
+
+
 #    update
 #       do_query
 #    find
