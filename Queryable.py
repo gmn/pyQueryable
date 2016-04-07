@@ -48,7 +48,7 @@ class db_result:
     def sort(self, obj):
         k = list(obj.keys())[0]
         v = {'reverse':True} if obj[k] < 0 else {'reverse':False}
-        self.data = list(sorted(self.data, key=attrgetter(k)))
+        self.data = list(sorted(self.data, key=lambda B:B[k], **v))
         return self
 
     def limit(self, ival):
@@ -322,21 +322,11 @@ class db_object:
 
 if __name__ == '__main__':
     db = db_object()
-    db.insert({'the quick':1})
-    db.insert({'brown':'fox'})
-    db.insert({'jumped':66.6})
-    db.insert({'over the':'lazy dog'})
-    #v = db.find({'$or':[{'brown':{'$exists':True}},{'fred':{'$exists':True}},{'the quick':{'$gt':0}}]})
-    #v = db.find({'$or':[{'fred':{'$exists':True}},{'the quick':{'$gt':0}}]})
-    #v = db.find({'the quick':{'$lt':2}})
-    v = db.find({'brown':{'$exists':False}})
-    print(str(v))
-    v = db.find({'brown':{'$exists':True}})
-    print(str(v))
-    db.path('test.db').save()
-
-    db = db_object()
-    print(db._data)
-    db = db_object().path('test.db').load()
-    print(db._data)
-
+    for x in [3, 5, 1, 4, 2]:
+        db.insert( {'a':x} )
+    r = db.find({'a':re.compile('.*')})
+    print(r.toString(min=True))
+    r.sort({'a':-1})
+    print(r.toString(min=True))
+    r.sort({'a':1})
+    print(r.toString(min=True))

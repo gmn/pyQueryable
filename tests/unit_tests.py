@@ -63,6 +63,32 @@ class QueryableTests(unittest.TestCase):
     def test_insert(self):
         print_inserts(self)
         pass
+
+    def test_sorting_int(self):
+        db = db_object()
+        for x in [3, 5, 1, 4, 2]:
+            db.insert( {'a':x} )
+
+        r = db.find({'a':re.compile('.*')})
+        print(r.toString(min=True))
+        self.assertEqual(r.data,
+            [{"a": 3, "_id": 1}, {"a": 5, "_id": 2}, {"a": 1, "_id": 3}, {"a": 4, "_id": 4}, {"a": 2, "_id": 5}] )
+        r.sort({'a':-1})
+        print(r.toString(min=True))
+        self.assertEqual(r.data,
+            [{"a": 5, "_id": 2}, {"a": 4, "_id": 4}, {"a": 3, "_id": 1}, {"a": 2, "_id": 5}, {"a": 1, "_id": 3}] )
+        r.sort({'a':1})
+        print(r.toString(min=True))
+        self.assertEqual(r.data,
+            [{"a": 1, "_id": 3}, {"a": 2, "_id": 5}, {"a": 3, "_id": 1}, {"a": 4, "_id": 4}, {"a": 5, "_id": 2}] )
+
+    def test_sorting_str(self):
+        pass
+
+    def test_sorting_other(self):
+        pass
+
+
     def test_remove(self):
         pass
     def test_or(self):
