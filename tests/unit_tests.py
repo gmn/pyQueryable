@@ -34,7 +34,7 @@ def print_inserts(self):
         db.insert( {'v':_Y(T,O)} )
         s = "{}{}'_id':{},'v':{}{}".format(s,'{',(O+1),_Y(T,O),'}')
         p( '\n-----------------------------' )
-        A = db.find({'v':re.compile('.*')})
+        A = db.find({'v':re.compile('.*')}).data
         p( A )
         p( '\n-----------------------------' )
         s = '{}]'.format(s)
@@ -50,15 +50,15 @@ class QueryableTests(unittest.TestCase):
         db.insert({'b':2,'c':3})
         db.insert({'c':3,'d':4})
 
-        self.assertEqual( db.find({'a':{'$exists':True}}),
+        self.assertEqual( db.find({'a':{'$exists':True}}).data,
             [{'_id': 1, 'a': 1, 'b': 2}])
-        self.assertEqual( db.find({'b':{'$exists':True}}),
+        self.assertEqual( db.find({'b':{'$exists':True}}).data,
             [{'a': 1, '_id': 1, 'b': 2}, {'c': 3, '_id': 2, 'b': 2}])
-        self.assertEqual( db.find({'c':{'$exists':True}}),
+        self.assertEqual( db.find({'c':{'$exists':True}}).data,
             [{'c': 3, '_id': 2, 'b': 2}, {'c': 3, 'd': 4, '_id': 3}])
-        self.assertEqual( db.find({'b':{'$exists':False}}),
+        self.assertEqual( db.find({'b':{'$exists':False}}).data,
             [{'c': 3, 'd': 4, '_id': 3}])
-        self.assertEqual( db.find({'b':{'$exists':False},'c':{'$exists':False}}), [])
+        self.assertEqual( db.find({'b':{'$exists':False},'c':{'$exists':False}}).data, [])
 
     def test_insert(self):
         print_inserts(self)

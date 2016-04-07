@@ -25,13 +25,11 @@ res = db.find() # returns a db_result; db_result contains the rows matching find
 
 import json
 import re
+from operator import attrgetter
 
 class db_result:
-
-    def __init__(self, init_data=False):
-        if init_data is False:
-            self.data = []
-        elif type(init_data) is type([]):
+    def __init__(self, init_data):
+        if type(init_data) is type([]):
             self.data = init_data
         elif type(init_data) is type({}):
             self.data = [ init_data ]
@@ -45,21 +43,30 @@ class db_result:
             self.data.extend(obj)
         else:
             raise Exception('db_result: push: bad input')
+        return self
 
-    def sort(self, obj ):
-        pass
+    def sort(self, obj):
+        k = list(obj.keys())[0]
+        v = {'reverse':True} if obj[k] < 0 else {'reverse':False}
+        self.data = list(sorted(self.data, key=attrgetter(k)))
+        return self
 
-    def limit(self, ival ):
-        pass
+    def limit(self, ival):
+        self.data = self.data[:ival]
+        return self
 
-    def skip(self, ival ):
-        pass
+    def skip(self, ival):
+        self.data = self.data[ival:]
+        return self
 
     def count(self):
         return len(self.data)
 
+    def toString(self,min=False):
+        xa = {} if min else {'indent':2}
+        return json.dumps(self.data, **xa)
 
-# returned by queryable.open()
+
 class db_object:
     """
     db_object requires a path to save
@@ -117,8 +124,9 @@ class db_object:
         self._id = self._id + 1
         return self._id
 
-    def print(self):
-        print( json.dumps(self._data, indent=2) )
+    def toString(self,min=False):
+        xa = {} if min else {'indent':2}
+        return json.dumps(self.data, **xa)
 
 
     @staticmethod
@@ -282,7 +290,7 @@ class db_object:
         return result
 
     def find(self, match):
-        return self.do_query(self._data, match)
+        return db_result(self.do_query(self._data, match))
 
     def clear(self):
         self._id = 0
