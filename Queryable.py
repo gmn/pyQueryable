@@ -68,7 +68,7 @@ class db_object:
         self._id = 0
         self._path = ''
         self._data = []
-        self._jsonarg = {} if compact else {"indent":2} 
+        self._jsonarg = {} if compact else {"indent":2}
 
     def path(self, _path):
         self._path = _path
@@ -133,9 +133,8 @@ class db_object:
             return 'SUBDOCUMENT' if '.' in val else 'NORMAL'
         elif type(val) is type({}):
             k = list(val.keys())[0]
-            for t in ['gt','gte','lt','lte','exists','ne']:
-                if k == '${}'.format(t):
-                    return 'CONDITIONAL'
+            if k in ['$gt','$gte','$lt','$lte','$exists','$ne','$in']:
+                return 'CONDITIONAL'
             return 'SUBDOCUMENT'
         elif type(val) is type([]):
             if key == '$or':
@@ -214,7 +213,8 @@ class db_object:
                                     '$gt': lambda a, b: a and b and a > b,
                                     '$gte':lambda a, b: a and b and a >= b,
                                     '$ne': lambda a, b: a and b and a != b,
-                                    '$eq': lambda a, b: a and b and a == b}
+                                    '$eq': lambda a, b: a and b and a == b,
+                                    '$in': lambda a, b: a and b and a in b}
 
                     compare = comparators.get(cond)
                     if compare is not None:
@@ -257,7 +257,8 @@ class db_object:
                                     '$gte':lambda a, b: nn(a) and nn(b) and a >= b,
                                     '$ne': lambda a, b: a != b,
                                     '$eq': lambda a, b: a == b,
-                                    '$exists': lambda a, b: bool(a) == bool(b) }
+                                    '$exists': lambda a, b: bool(a) == bool(b),
+                                    '$in': lambda a, b: a in b }
 
                     firstkey = list(test['val'].keys())[0]
                     comparator = comparators.get(firstkey)
@@ -325,4 +326,4 @@ if __name__ == '__main__':
     print(db._data)
     db = db_object().path('test.db').load()
     print(db._data)
-    
+
