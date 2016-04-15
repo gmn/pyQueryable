@@ -71,11 +71,24 @@ class db_object:
     """
     db_object requires a path to save
     """
-    def __init__(self,compact=True):
+
+    def __init__(self,compact=True, auto_index='_id'):
         self._id = 0
         self._path = ''
         self._data = []
         self._jsonarg = {} if compact else {"indent":2}
+        self.auto_index = auto_index
+
+        def nn(a):
+            return type(a) is not type(None) and type(a) is not type(False)
+        self.comparators = {'$lt': lambda a, b: nn(a) and nn(b) and a < b,
+                            '$lte':lambda a, b: nn(a) and nn(b) and a <= b,
+                            '$gt': lambda a, b: nn(a) and nn(b) and a > b,
+                            '$gte':lambda a, b: nn(a) and nn(b) and a >= b,
+                            '$ne': lambda a, b: a != b,
+                            '$eq': lambda a, b: a == b,
+                            '$exists': lambda a, b: bool(a) == bool(b),
+                            '$in': lambda a, b: [i for i in b if i in a]}
 
     def path(self, _path):
         self._path = _path
@@ -107,8 +120,8 @@ class db_object:
     def insert(self, row_or_ary):
         def insert_one(self, row):
             assert type(row) is type({})
-            if '_id' not in row:
-                row['_id'] = self.new_index()
+            if self.auto_index and self.auto_index not in row:
+                row[ self.auto_index ] = self.new_index()
             self._data.append(row)
 
         if type(row_or_ary) is type([]):
@@ -128,9 +141,8 @@ class db_object:
         xa = {} if min else {'indent':2}
         return json.dumps(self.data, **xa)
 
-
-    @staticmethod
-    def detect_clause_type(key, val):
+    @classmethod
+    def detect_clause_type(cls, key, val):
         if type(val) is type(True) or \
                 type(val) is type(1) or \
                 type(val) is type(1.0) or \
@@ -141,7 +153,7 @@ class db_object:
             return 'SUBDOCUMENT' if '.' in val else 'NORMAL'
         elif type(val) is type({}):
             k = list(val.keys())[0]
-            if k in ['$gt','$gte','$lt','$lte','$exists','$ne','$in']:
+            if k in cls.comparators:
                 return 'CONDITIONAL'
             return 'SUBDOCUMENT'
         elif type(val) is type([]):
@@ -216,14 +228,6 @@ class db_object:
             for key in row.keys():
                 # key matches
                 if key == test['key']:
-                    comparators = { '$lt': lambda a, b: a and b and a < b,
-                                    '$lte':lambda a, b: a and b and a <= b,
-                                    '$gt': lambda a, b: a and b and a > b,
-                                    '$gte':lambda a, b: a and b and a >= b,
-                                    '$ne': lambda a, b: a and b and a != b,
-                                    '$eq': lambda a, b: a and b and a == b,
-                                    '$in': lambda a, b: a and b and a in b}
-
                     compare = comparators.get(cond)
                     if compare is not None:
                         if compare(row[key], test['val'].get(cond)):
@@ -251,28 +255,16 @@ class db_object:
                 _t = cls.detect_clause_type( eltkey, eltval )
                 if _t == 'NORMAL':
                     if type(test['val']) is type(re.compile('')):
-                        if row[test['key']] and row[test['key']].match(test['val']):
+                        if row.get(test['key']) is not None and \
+                                test['val'].match(str(row[test['key']])):
                             res.append(row)
-                    elif row[test['key']] == test['val']:
+                    elif row.get(test['key']) == test['val']:
                         res.append( row )
-                    break
                 elif _t == "CONDITIONAL":
-                    def nn(a):
-                        return type(a) is not type(None) and type(a) is not type(False)
-                    comparators = { '$lt': lambda a, b: nn(a) and nn(b) and a < b,
-                                    '$lte':lambda a, b: nn(a) and nn(b) and a <= b,
-                                    '$gt': lambda a, b: nn(a) and nn(b) and a > b,
-                                    '$gte':lambda a, b: nn(a) and nn(b) and a >= b,
-                                    '$ne': lambda a, b: a != b,
-                                    '$eq': lambda a, b: a == b,
-                                    '$exists': lambda a, b: bool(a) == bool(b),
-                                    '$in': lambda a, b: a in b }
-
                     firstkey = list(test['val'].keys())[0]
-                    comparator = comparators.get(firstkey)
-                    if comparator and comparator(row.get(test['key']), test['val'].get(firstkey)):
+                    compare = comparators.get(firstkey)
+                    if compare and compare(row.get(test['key']), test['val'].get(firstkey)):
                         res.append(row)
-                        break
         return res
 
 

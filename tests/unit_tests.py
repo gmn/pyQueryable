@@ -92,7 +92,15 @@ class QueryableTests(unittest.TestCase):
     def test_remove(self):
         pass
     def test_or(self):
-        pass
+        db = db_object(auto_index='').insert([{'a':1},{'b':2},{'c':3},{'a':4}])
+        r = re.compile('.*')
+        self.assertEqual( db.find({'$or':[{'a':r},{'b':2}]}).data, \
+                            [{'a': 1}, {'b': 2}, {'a': 4}] )
+    def test_and(self):
+        M = {'a':1,'b':2,'c':3,'d':4}
+        db = db_object(auto_index='').insert(M)
+        res = db.find(M)
+        self.assertEqual( res.data, [M] )
     def test_in(self):
         pass
     def test_ne(self):
