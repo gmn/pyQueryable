@@ -17,6 +17,6 @@ res = db.find(M)
 print( res.data )
 
 #IN
-db = db_object(auto_index='').insert({'a':[1,3,5,7,9]})
-res = db.find({'a':{'$in':[3]}})
+db = db_object(auto_index='').insert([{'a':3},{'a':5},{'b':2},{'a':1}])
+res = db.find({'a':{'$in':[2,3,5]}})
 print( res.data )

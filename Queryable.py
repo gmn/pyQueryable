@@ -88,7 +88,7 @@ class db_object:
                             '$ne': lambda a, b: a != b,
                             '$eq': lambda a, b: a == b,
                             '$exists': lambda a, b: bool(a) == bool(b),
-                            '$in': lambda a, b: [i for i in b if i in a]}
+                            '$in': lambda a, b: a in b}
 
     def path(self, _path):
         self._path = _path
@@ -141,8 +141,7 @@ class db_object:
         xa = {} if min else {'indent':2}
         return json.dumps(self.data, **xa)
 
-    @classmethod
-    def detect_clause_type(cls, key, val):
+    def detect_clause_type(self, key, val):
         if type(val) is type(True) or \
                 type(val) is type(1) or \
                 type(val) is type(1.0) or \
@@ -153,7 +152,7 @@ class db_object:
             return 'SUBDOCUMENT' if '.' in val else 'NORMAL'
         elif type(val) is type({}):
             k = list(val.keys())[0]
-            if k in cls.comparators:
+            if k in self.comparators:
                 return 'CONDITIONAL'
             return 'SUBDOCUMENT'
         elif type(val) is type([]):
@@ -163,8 +162,7 @@ class db_object:
         else:
             return 'UNKNOWN'
 
-    @classmethod
-    def match_rows_NORMAL(cls, rows, test):
+    def match_rows_NORMAL(self, rows, test):
         assert type(rows) is type([])
         assert type(test) is type({})
         res = []
@@ -188,8 +186,7 @@ class db_object:
                     break
         return res
 
-    @classmethod
-    def match_rows_CONDITIONAL(cls, rows, test):
+    def match_rows_CONDITIONAL(self, rows, test):
         assert type(rows) is type([])
         assert type(test) is type({})
         res = []
@@ -228,7 +225,7 @@ class db_object:
             for key in row.keys():
                 # key matches
                 if key == test['key']:
-                    compare = comparators.get(cond)
+                    compare = self.comparators.get(cond)
                     if compare is not None:
                         if compare(row[key], test['val'].get(cond)):
                             res.append(row)
@@ -240,8 +237,7 @@ class db_object:
             del test['val'][cond]
         return res
 
-    @classmethod
-    def match_rows_OR(cls, rows, array):
+    def match_rows_OR(self, rows, array):
         assert type(rows) is type([])
         assert type(array) is type([])
         res = []
@@ -252,7 +248,7 @@ class db_object:
                 eltval = elt[eltkey]
                 test = { "key": eltkey, "val": eltval }
 
-                _t = cls.detect_clause_type( eltkey, eltval )
+                _t = self.detect_clause_type( eltkey, eltval )
                 if _t == 'NORMAL':
                     if type(test['val']) is type(re.compile('')):
                         if row.get(test['key']) is not None and \
@@ -262,23 +258,22 @@ class db_object:
                         res.append( row )
                 elif _t == "CONDITIONAL":
                     firstkey = list(test['val'].keys())[0]
-                    compare = comparators.get(firstkey)
+                    compare = self.comparators.get(firstkey)
                     if compare and compare(row.get(test['key']), test['val'].get(firstkey)):
                         res.append(row)
         return res
 
 
-    @classmethod
-    def do_query(cls, master, clauses):
+    def do_query(self, master, clauses):
         result = master[:]
         for key, val in clauses.items():
-            _t = cls.detect_clause_type(key, val)
+            _t = self.detect_clause_type(key, val)
             if _t == 'NORMAL':
-                result = cls.match_rows_NORMAL(result, {'key':key,'val':val})
+                result = self.match_rows_NORMAL(result, {'key':key,'val':val})
             elif _t == 'CONDITIONAL':
-                result = cls.match_rows_CONDITIONAL(result, {'key':key,'val':val})
+                result = self.match_rows_CONDITIONAL(result, {'key':key,'val':val})
             elif _t == 'OR':
-                result = cls.match_rows_OR(result, val)
+                result = self.match_rows_OR(result, val)
         return result
 
     def find(self, match):

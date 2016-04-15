@@ -59,10 +59,11 @@ class QueryableTests(unittest.TestCase):
         self.assertEqual( db.find({'b':{'$exists':False}}).data,
             [{'c': 3, 'd': 4, '_id': 3}])
         self.assertEqual( db.find({'b':{'$exists':False},'c':{'$exists':False}}).data, [])
+        p('EXISTS')
 
     def test_insert(self):
         print_inserts(self)
-        pass
+        p('SORTING, INSERT')
 
     def test_sorting_int(self):
         db = db_object()
@@ -81,33 +82,65 @@ class QueryableTests(unittest.TestCase):
         print(r.toString(min=True))
         self.assertEqual(r.data,
             [{"a": 1, "_id": 3}, {"a": 2, "_id": 5}, {"a": 3, "_id": 1}, {"a": 4, "_id": 4}, {"a": 5, "_id": 2}] )
+        p('SORTING, INT')
 
     def test_sorting_str(self):
-        pass
+        p('X - SORTING, STR')
 
     def test_sorting_other(self):
-        pass
-
+        p('X - SORTING, OTHER')
 
     def test_remove(self):
-        pass
+        p('X - REMOVE')
+
     def test_or(self):
         db = db_object(auto_index='').insert([{'a':1},{'b':2},{'c':3},{'a':4}])
         r = re.compile('.*')
         self.assertEqual( db.find({'$or':[{'a':r},{'b':2}]}).data, \
                             [{'a': 1}, {'b': 2}, {'a': 4}] )
+        p('OR')
+
     def test_and(self):
         M = {'a':1,'b':2,'c':3,'d':4}
         db = db_object(auto_index='').insert(M)
         res = db.find(M)
         self.assertEqual( res.data, [M] )
+        p('AND')
+
     def test_in(self):
-        pass
-    def test_ne(self):
-        pass
-    def test_gt_gte_lt_lte(self):
-        pass
+        db = db_object(auto_index='').insert([{'a':3},{'a':5},{'b':2},{'a':1,'z':'meh'}])
+        res = db.find({'a':{'$in':[2,3,5]}})
+        self.assertEqual( res.data, [{'a': 3}, {'a': 5}] )
+        res = db.find({'$or':[{'b':{'$in':[2]}},{'a':{'$in':[1]}}]})
+        self.assertEqual( res.data, [{'b': 2}, {'a': 1,'z':'meh'}] )
+        p('IN')
+
     def test_regex(self):
+        pass
+
+    def test_lt(self):
+        db = db_object(auto_index='').insert([{'a':3},{'a':5},{'b':2},{'a':1,'z':'meh'}])
+        for i in range(10):
+            db.insert({'x':i})
+        res = db.find({'x':{"$lt":3}})
+        self.assertEqual( res.data, [{'x':0},{'x':1},{'x':2}] )
+        p('LT')
+
+    def test_lte(self):
+        db = db_object(auto_index='').insert([{'a':3},{'a':5},{'b':2},{'a':1,'z':'meh'}])
+        for i in range(10):
+            db.insert({'x':i})
+        res = db.find({'x':{"$lte":3}})
+        self.assertEqual( res.data, [{'x':0},{'x':1},{'x':2},{'x':3}] )
+        p('LTE')
+
+    def test_gt(self):
+        pass
+
+    def test_gte(self):
+        pass
+
+    def test_ne(self):
         pass
 
 if __name__ == '__main__':
