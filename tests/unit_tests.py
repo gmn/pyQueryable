@@ -93,10 +93,10 @@ class QueryableTests(unittest.TestCase):
 
     def test_remove(self):
         db = db_object(auto_index='').insert([{'a':3},{'a':5},{'b':2},{'a':1}])
-        res = db.remove({'a':{'$exists':True}}).data()
+        res = db.remove({'a':{'$exists':True}})._data
         self.assertEqual(res, [{'b':2}] )
         db = db_object(auto_index='').insert([{'a':3},{'a':5},{'b':2},{'a':1}])
-        res = db.remove({'a':{'$exists':False}}).data()
+        res = db.remove({'a':{'$exists':False}})._data
         self.assertEqual(res, [{'a': 3}, {'a': 5}, {'a': 1}] )
         p('REMOVE')
 
@@ -122,6 +122,10 @@ class QueryableTests(unittest.TestCase):
         self.assertEqual( res.data, [{'b': 2}, {'a': 1,'z':'meh'}] )
         p('IN')
 
+    def test_nin(self):
+        p('X - NIN')
+        pass
+
     def test_regex(self):
         pass
 
@@ -142,12 +146,18 @@ class QueryableTests(unittest.TestCase):
         p('LTE')
 
     def test_gt(self):
+        db = db_object(auto_index='').insert([{'x':1,'n':'one'},{'x':1.5,'n':'one point five'},{'x':'two','n':2}])
+        res = db.find({'x':{'$gt':1}})
+        self.assertEqual(res.data, [{'x':1.5,'n':'one point five'}])
+        p('GT')
         pass
 
     def test_gte(self):
+        p('X - GTE')
         pass
 
     def test_ne(self):
+        p('X - NE')
         pass
 
 if __name__ == '__main__':

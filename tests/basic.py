@@ -28,8 +28,8 @@ print( ' == ' + str([{'c': 3, 'd': 4, '_id': 3}]) )
 
 # REMOVE
 db = db_object(auto_index='').insert([{'a':3},{'a':5},{'b':2},{'a':1}])
-res = db.remove({'a':{'$exists':True}}).data()
+res = db.remove({'a':{'$exists':True}})._data
 print(res)
 db = db_object(auto_index='').insert([{'a':3},{'a':5},{'b':2},{'a':1}])
-res = db.remove({'a':{'$exists':False}}).data()
+res = db.remove({'a':{'$exists':False}})._data
 print(res)

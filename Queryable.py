@@ -1,14 +1,13 @@
 """
-queryable.py
+Queryable.py
 
 OVERVIEW
 
-Queryable.py is a super simplistic database system. It is
-essentially a wrapper around JSON which gives a standardized
-"JSON array full of objects" a query language through which
-CRUD operations can be performed on it, as well as structured
-querying. The syntax chosen for this is a simplified version
-of MongoDB.
+* Queryable.py * is a super simplistic database system.
+Essentially it is a wrapper around JSON which superimposes a
+query language over an "JSON array full of objects", giving the
+ability to query it in various ways using a simplified version of 
+MongoDB syntax.
 
 Queryable.py is designed to be as simple as possible, adding no
 features beyond the basic I/O manipulation of the JSON file,
@@ -16,11 +15,18 @@ and for everything to be included in one file with the minimum
 possible number of manipulations to get your data into and out
 of the JSON array.
 
-FLOW
-from queryable import queryable
-db = queryable.open() # returns a db_object; db_object contains the whole db in memory
-res = db.find() # returns a db_result; db_result contains the rows matching find() parms
-                # and the methods to process it further
+USAGE:
+from Queryable import db_object
+
+db = db_object().path('/optional/path/to_save/or_load/from.json').data(json_array_or_string)
+db.load()
+
+res = db.find() # returns a db_result
+                # db_result contains the rows matching find() parms 
+                # and the methods to sort().limit().skip() -- methods can be chained
+db.update()
+db.remove()
+db.save()
 """
 
 import json
@@ -100,7 +106,7 @@ class db_object:
         elif type(_data) is type([]):
             self._data = _data
         else:
-            raise Exception('db_object: bad input')
+            raise Exception('db_object: bad input, must be list of dict or json string')
         return self
 
     def load(self, _path=False):
@@ -288,21 +294,10 @@ class db_object:
         return self
 
     def remove(self, constraints):
-        matched = self.do_query(self._data, constraints)
-        ids = [id(row) for row in matched]
-        matching_indexes = []
-        for index, row in enumerate(self._data):
-            for j, _id in enumerate(ids):
-                if id(row) == _id:
-                    matching_indexes.append(index)
-                    ids = ids[:j] + ids[j+1:]
-                    break
-        for index in reversed(sorted(matching_indexes)):
-            self._data = self._data[:index] + self._data[index+1:]
+        for matched in self.do_query(self._data, constraints):
+            self._data.remove(matched)
         return self
 
     def count(self):
         return len(self._data)
 
-    def data(self):
-        return self._data
