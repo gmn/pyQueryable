@@ -221,7 +221,8 @@ class db_object:
                     res.append(row)
                     continue
 
-            # for every unique key in row
+            # these comparators positively match the key, so we can do them as a group
+            # for every unique key in the row
             for key in row.keys():
                 # key matches
                 if key == test['key']:
@@ -230,11 +231,6 @@ class db_object:
                         if compare(row[key], test['val'].get(cond)):
                             res.append(row)
                             break
-
-        # remove the key:val from test object
-        # FIXME: why do this? it should be obvious
-        if cond:
-            del test['val'][cond]
         return res
 
     def match_rows_OR(self, rows, array):
@@ -283,37 +279,30 @@ class db_object:
         self._id = 0
         self._data = []
 
+    def update(self, constraint, operand):
+        matched = self.do_query(self._data, constraint)
+        return self
 
-#    update
-#       do_query
-#    find
-#       do_query
-#    distinct
-#       do_query
-#    remove
-#       do_query
-#    count
-#    do_query
-#        return db_result
+    def distinct(self):
+        #do_query
+        return self
 
-#
-#class queryable:
-#    """
-#    Module Entry Points
-#    """
-#    # can specify a path to open, and can provide data
-#    @staticmethod
-#    def open(db_path='', set_data=[]):
-#        return db_object(db_path, set_data)
+    def remove(self, constraints):
+        matched = self.do_query(self._data, constraints)
+        ids = [id(row) for row in matched]
+        matching_indexes = []
+        for index, row in enumerate(self._data):
+            for j, _id in enumerate(ids):
+                if id(row) == _id:
+                    matching_indexes.append(index)
+                    ids = ids[:j] + ids[j+1:]
+                    break
+        for index in reversed(sorted(matching_indexes)):
+            self._data = self._data[:index] + self._data[index+1:]
+        return self
 
+    def count(self):
+        return len(self._data)
 
-if __name__ == '__main__':
-    db = db_object()
-    for x in [3, 5, 1, 4, 2]:
-        db.insert( {'a':x} )
-    r = db.find({'a':re.compile('.*')})
-    print(r.toString(min=True))
-    r.sort({'a':-1})
-    print(r.toString(min=True))
-    r.sort({'a':1})
-    print(r.toString(min=True))
+    def data(self):
+        return self._data

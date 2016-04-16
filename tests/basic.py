@@ -20,3 +20,16 @@ print( res.data )
 db = db_object(auto_index='').insert([{'a':3},{'a':5},{'b':2},{'a':1}])
 res = db.find({'a':{'$in':[2,3,5]}})
 print( res.data )
+
+# EXISTS : false
+db = db_object().insert({'a':1,'b':2}).insert({'b':2,'c':3}).insert({'c':3,'d':4})
+print( db.find({'b':{'$exists':False}}).data, end='' )
+print( ' == ' + str([{'c': 3, 'd': 4, '_id': 3}]) )
+
+# REMOVE
+db = db_object(auto_index='').insert([{'a':3},{'a':5},{'b':2},{'a':1}])
+res = db.remove({'a':{'$exists':True}}).data()
+print(res)
+db = db_object(auto_index='').insert([{'a':3},{'a':5},{'b':2},{'a':1}])
+res = db.remove({'a':{'$exists':False}}).data()
+print(res)

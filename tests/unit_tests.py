@@ -10,6 +10,7 @@ from Queryable import db_object
 
 p = lambda s: print(str(s))
 
+# object equal
 def objeq( x, y ):
     unmatched = set(x.items()) ^ set(y.items())
     return len(unmatched) == 0
@@ -33,14 +34,14 @@ def print_inserts(self):
         O = 9
         db.insert( {'v':_Y(T,O)} )
         s = "{}{}'_id':{},'v':{}{}".format(s,'{',(O+1),_Y(T,O),'}')
-        p( '\n-----------------------------' )
+        #p( '\n-----------------------------' )
         A = db.find({'v':re.compile('.*')}).data
-        p( A )
-        p( '\n-----------------------------' )
+        #p( A )
+        #p( '\n-----------------------------' )
         s = '{}]'.format(s)
-        p( s )
+        #p( s )
         self.assertEqual(A, eval(s))
-        p( '=======================================================\n' )
+        #p( '=======================================================\n' )
 
 
 class QueryableTests(unittest.TestCase):
@@ -71,15 +72,15 @@ class QueryableTests(unittest.TestCase):
             db.insert( {'a':x} )
 
         r = db.find({'a':re.compile('.*')})
-        print(r.toString(min=True))
+        #print(r.toString(min=True))
         self.assertEqual(r.data,
             [{"a": 3, "_id": 1}, {"a": 5, "_id": 2}, {"a": 1, "_id": 3}, {"a": 4, "_id": 4}, {"a": 2, "_id": 5}] )
         r.sort({'a':-1})
-        print(r.toString(min=True))
+        #print(r.toString(min=True))
         self.assertEqual(r.data,
             [{"a": 5, "_id": 2}, {"a": 4, "_id": 4}, {"a": 3, "_id": 1}, {"a": 2, "_id": 5}, {"a": 1, "_id": 3}] )
         r.sort({'a':1})
-        print(r.toString(min=True))
+        #print(r.toString(min=True))
         self.assertEqual(r.data,
             [{"a": 1, "_id": 3}, {"a": 2, "_id": 5}, {"a": 3, "_id": 1}, {"a": 4, "_id": 4}, {"a": 5, "_id": 2}] )
         p('SORTING, INT')
@@ -91,7 +92,13 @@ class QueryableTests(unittest.TestCase):
         p('X - SORTING, OTHER')
 
     def test_remove(self):
-        p('X - REMOVE')
+        db = db_object(auto_index='').insert([{'a':3},{'a':5},{'b':2},{'a':1}])
+        res = db.remove({'a':{'$exists':True}}).data()
+        self.assertEqual(res, [{'b':2}] )
+        db = db_object(auto_index='').insert([{'a':3},{'a':5},{'b':2},{'a':1}])
+        res = db.remove({'a':{'$exists':False}}).data()
+        self.assertEqual(res, [{'a': 3}, {'a': 5}, {'a': 1}] )
+        p('REMOVE')
 
     def test_or(self):
         db = db_object(auto_index='').insert([{'a':1},{'b':2},{'c':3},{'a':4}])
