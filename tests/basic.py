@@ -83,3 +83,12 @@ res.data[0]['a'] = 666
 p(db._data) # M) # make sure changing result isn't the same python object as main set
 p(res.data) # [{'a':666},{'a':0}])
 
+# sort dates
+db = db_object(compact=False)
+db.insert({'x':1, 'd':'now()'})
+db.insert({'x':2, 'd':'now()'})
+db.insert({'x':3, 'd':'now()'})
+db.insert({'x':4, 'd':'now()'})
+res = db.find().sort({'d':-1})
+p(res.toString())
+db.save(path='./save_file')

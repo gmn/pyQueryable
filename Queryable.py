@@ -42,6 +42,7 @@ import json
 import re
 from operator import attrgetter
 import copy
+from datetime import datetime
 
 class db_result:
     def __init__(self, init_data):
@@ -151,13 +152,16 @@ class db_object:
             self._data = json.load(f)
         return self
 
-    def save(self, path=False):
+    def save(self, path=False, compact=None):
         """
         save to file.
 
-        path: Can optionally set the filepath
+        path:       Can optionally set the filepath
+        compact:    set to true or false to control how save operation writes the file
         """
         self.path(path)
+        if compact is not None:
+            self._jsonarg = {} if compact else {"indent":2}
         with open(self._path, 'w') as f:
             f.write( json.dumps(self._data, **self._jsonarg) )
         return self
@@ -171,6 +175,12 @@ class db_object:
             if self.auto_index and self.auto_index not in row:
                 row[ self.auto_index ] = self.new_index()
             self._data.append(row)
+
+            # replace any 'now()' value strings with the current timestamp
+            if 'now()' in row.values():
+                for k, v in row.items():
+                    if v == 'now()':
+                        row[k] = datetime.strftime(datetime.now(),'%Y-%m-%dT%H:%M:%S.%f%z')
 
         if type(row_or_ary) is type([]):
             for row in row_or_ary:
@@ -319,10 +329,12 @@ class db_object:
                 result = self.match_rows_OR(result, val)
         return result
 
-    def find(self, match):
+    def find(self, match=None):
         """
         return all rows matching query
         """
+        if match is None:
+            return db_result(self._data)
         return db_result(self.do_query(self._data, match))
 
     def clear(self):
