@@ -162,11 +162,27 @@ class QueryableTests(unittest.TestCase):
         pass
 
     def test_ne(self):
-        p('XXX - NE - XXX')
+        db = db_object(auto_index='').insert([{'x':1},{'x':1.0},{'x':1.01},{'x':'1'}])
+        res = db.find({'x':{'$ne':1}})
+        self.assertEqual(res.data, [{'x':1.01}, {'x':'1'}])
+        p('NE')
         pass
 
     def test_regex(self):
-        p('XXX - REGEX - XXX')
+        db = db_object(auto_index='').insert([{'x':'fred'},{'x':'dead'},{'x':256},{'x':'leded'}])
+        res = db.find({'x':re.compile('.*ead')})
+        self.assertEqual(res.data, [{'x':'dead'}])
+        res = db.find({'x':re.compile('.*ed.*')})
+        self.assertEqual(res.data, [{'x':'fred'},{'x':'leded'}])
+        res = db.find({'x':re.compile('[0-9]+')})
+        self.assertEqual(res.data, [{'x':256}])
+        res = db.find({'x':re.compile('\d+$')})
+        self.assertEqual(res.data, [{'x':256}])
+        res = db.find({'x':re.compile('[a-z]{5}')})
+        self.assertEqual(res.data, [{'x':'leded'}])
+        res = db.find({'x':re.compile('^[a-z]{4}$')})
+        self.assertEqual(res.data, [{'x':'fred'},{'x':'dead'}])
+        p('REGEX')
         pass
 
     def test_update(self):
