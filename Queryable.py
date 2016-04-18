@@ -83,11 +83,15 @@ class db_result:
         return json.dumps(self.data, **xa)
 
 
-class queryable:
-    def __init__(self,compact=True, auto_index='_id'):
+class db_object:
+    def __init__(self,compact=True, auto_index='_id', path=None, data=None):
+        """
+        compact:    set to false to save JSON in multi-line format for readability
+        auto_index: can be unset to eliminate automaticly adding indexes into objects
+        """
         self._id = 0
-        self._path = ''
-        self._data = []
+        self._path = path if path else ''
+        self._data = data if data else []
         self._jsonarg = {} if compact else {"indent":2}
         self.auto_index = auto_index
 
@@ -112,11 +116,17 @@ class queryable:
                             '$nin': lambda a, b: a not in b}
 
     def path(self, _path):
+        """
+        set the file path. must be fully qualified file path, not just directory
+        """
         if _path:
             self._path = _path
         return self
 
     def data(self, _data):
+        """
+        populate the database with data. Can be both/either string or ``list of dict''
+        """
         if _data is not False:
             if type(_data) is type(''):
                 self._data = json.loads(_data)
@@ -131,18 +141,31 @@ class queryable:
         return self
 
     def load(self, path=False):
+        """
+        load from file.
+
+        path: Can optionally set the filepath
+        """
         self.path(path)
         with open(self._path, 'r') as f:
             self._data = json.load(f)
         return self
 
     def save(self, path=False):
+        """
+        save to file.
+
+        path: Can optionally set the filepath
+        """
         self.path(path)
         with open(self._path, 'w') as f:
             f.write( json.dumps(self._data, **self._jsonarg) )
         return self
 
     def insert(self, row_or_ary):
+        """
+        insert a row (dict), or array or rows (list of dict)
+        """
         def insert_one(self, row):
             assert type(row) is type({})
             if self.auto_index and self.auto_index not in row:
@@ -284,7 +307,6 @@ class queryable:
                         res.append(row)
         return res
 
-
     def do_query(self, master, clauses):
         result = master
         for key, val in clauses.items():
@@ -298,19 +320,34 @@ class queryable:
         return result
 
     def find(self, match):
+        """
+        return all rows matching query
+        """
         return db_result(self.do_query(self._data, match))
 
     def clear(self):
+        """
+        erase the internal database
+        """
         self._id = 0
         self._data = []
         return self
 
     def remove(self, constraints):
+        """
+        remove all rows from database that match the query
+        """
         for matched in self.do_query(self._data, constraints):
             self._data.remove(matched)
         return self
 
     def update(self, query, update, options=None):
+        """
+        update all items matching query,
+        set their keys to any in update object, as: {"$set":{key:val}}
+        set multi:True to update multiple rows: options => {'multi':True}
+        set upsert:True to insert if row query is missing => {'upsert':True}
+        """
         do_upsert = True if options and options.get('upsert') else False
         do_multi = True if options and options.get('multi') else False
         _set = update['$set'] # error if doesn't have it
@@ -329,6 +366,10 @@ class queryable:
         return self
 
     def distinct(self, key, clause=None):
+        """
+        return only distinct set of key:value pairs possessing 'key'
+        where no more than one row of key:value is returned
+        """
         assert type(key) is type('')
 
         if clause is not None:
