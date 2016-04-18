@@ -3,6 +3,7 @@ import re, os, sys
 sys.path.append(os.path.realpath('.'))
 sys.path.append(os.path.realpath('..'))
 from Queryable import db_object
+p = lambda x: print(str(x))
 
 #OR
 db = db_object(auto_index='').insert([{'a':1},{'b':2},{'c':3},{'a':4}])
@@ -33,3 +34,13 @@ print(res)
 db = db_object(auto_index='').insert([{'a':3},{'a':5},{'b':2},{'a':1}])
 res = db.remove({'a':{'$exists':False}})._data
 print(res)
+
+# tests if it can filter out bad types
+db = db_object(auto_index='').insert([{'x':1,'n':'one'},{'x':1.5,'n':'one point five'},{'x':'two','n':2}])
+res = db.find({'x':{'$gt':1}})
+p(res.data)
+
+# can we sort around bad types?
+db = db_object(auto_index='').insert([{'a':'a'},{'a':'A'},{'a':'c'},{'a':'2'}])
+res = db.find({'a':re.compile('.*')}).sort({'a':-1})
+p(res.data)

@@ -86,10 +86,10 @@ class QueryableTests(unittest.TestCase):
         p('SORTING, INT')
 
     def test_sorting_str(self):
-        p('X - SORTING, STR')
-
-    def test_sorting_other(self):
-        p('X - SORTING, OTHER')
+        db = db_object(auto_index='').insert([{'a':'A'},{'a':'2'},{'a':'a'},{'a':'c'}])
+        res = db.find({'a':re.compile('.*')}).sort({'a':-1})
+        self.assertEqual(res.data, [{'a': 'c'}, {'a': 'a'}, {'a': 'A'}, {'a': '2'}])
+        p('SORTING, STR')
 
     def test_remove(self):
         db = db_object(auto_index='').insert([{'a':3},{'a':5},{'b':2},{'a':1}])
@@ -123,7 +123,12 @@ class QueryableTests(unittest.TestCase):
         p('IN')
 
     def test_nin(self):
-        p('X - NIN')
+        db = db_object(auto_index='').insert([{'a':3},{'a':5},{'a':2},{'a':'meh'}])
+        res = db.find({'a':{'$nin':[2,3,5]}})
+        self.assertEqual(res.data, [{'a':'meh'}])
+        res = db.find({'a':{'$nin':[1]}})
+        self.assertEqual(res.data, [{'a':3},{'a':5},{'a':2},{'a':'meh'}])
+        p('NIN')
         pass
 
     def test_regex(self):
@@ -153,11 +158,14 @@ class QueryableTests(unittest.TestCase):
         pass
 
     def test_gte(self):
-        p('X - GTE')
+        db = db_object(auto_index='').insert([{'x':1,'n':'one'},{'x':1.5,'n':'one point five'},{'x':'two','n':2}])
+        res = db.find({'x':{'$gte':1.000}})
+        self.assertEqual(res.data, [{'x':1,'n':'one'},{'x':1.5,'n':'one point five'}])
+        p('GTE')
         pass
 
     def test_ne(self):
-        p('X - NE')
+        p('XXX - NE - XXX')
         pass
 
 if __name__ == '__main__':

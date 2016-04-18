@@ -6,7 +6,7 @@ OVERVIEW
 * Queryable.py * is a super simplistic database system.
 Essentially it is a wrapper around JSON which superimposes a
 query language over an "JSON array full of objects", giving the
-ability to query it in various ways using a simplified version of 
+ability to query it in various ways using a simplified version of
 MongoDB syntax.
 
 Queryable.py is designed to be as simple as possible, adding no
@@ -22,7 +22,7 @@ db = db_object().path('/optional/path/to_save/or_load/from.json').data(json_arra
 db.load()
 
 res = db.find() # returns a db_result
-                # db_result contains the rows matching find() parms 
+                # db_result contains the rows matching find() parms
                 # and the methods to sort().limit().skip() -- methods can be chained
 db.update()
 db.remove()
@@ -85,16 +85,25 @@ class db_object:
         self._jsonarg = {} if compact else {"indent":2}
         self.auto_index = auto_index
 
-        def nn(a):
-            return type(a) is not type(None) and type(a) is not type(False)
-        self.comparators = {'$lt': lambda a, b: nn(a) and nn(b) and a < b,
-                            '$lte':lambda a, b: nn(a) and nn(b) and a <= b,
-                            '$gt': lambda a, b: nn(a) and nn(b) and a > b,
-                            '$gte':lambda a, b: nn(a) and nn(b) and a >= b,
+        def verify(a,b):
+            if type(a) is type(None) or type(a) is type(False):
+                return False
+            if type(a) is type(b):
+                return True
+            if type(a) is type(1000) and type(b) is type(3.14):
+                return True
+            if type(a) is type(3.14) and type(b) is type(1000):
+                return True
+            return False
+        self.comparators = {'$lt': lambda a, b: verify(a, b) and a < b,
+                            '$lte':lambda a, b: verify(a, b) and a <= b,
+                            '$gt': lambda a, b: verify(a, b) and a > b,
+                            '$gte':lambda a, b: verify(a, b) and a >= b,
                             '$ne': lambda a, b: a != b,
                             '$eq': lambda a, b: a == b,
                             '$exists': lambda a, b: bool(a) == bool(b),
-                            '$in': lambda a, b: a in b}
+                            '$in': lambda a, b: a in b,
+                            '$nin': lambda a, b: a not in b}
 
     def path(self, _path):
         self._path = _path
