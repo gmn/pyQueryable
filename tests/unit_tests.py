@@ -131,9 +131,6 @@ class QueryableTests(unittest.TestCase):
         p('NIN')
         pass
 
-    def test_regex(self):
-        pass
-
     def test_lt(self):
         db = db_object(auto_index='').insert([{'a':3},{'a':5},{'b':2},{'a':1,'z':'meh'}])
         for i in range(10):
@@ -167,6 +164,23 @@ class QueryableTests(unittest.TestCase):
     def test_ne(self):
         p('XXX - NE - XXX')
         pass
+
+    def test_regex(self):
+        p('XXX - REGEX - XXX')
+        pass
+
+    def test_update(self):
+        p('XXX - UPDATE - XXX')
+        pass
+
+    def test_upsert(self):
+        p('XXX - UPSERT - XXX')
+        pass
+
+    def test_distinct(self):
+        p('XXX - DISTINCT - XXX')
+        pass
+
 
 if __name__ == '__main__':
     unittest.main()
