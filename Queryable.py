@@ -18,12 +18,21 @@ of the JSON array.
 USAGE:
 from Queryable import queryable
 
-db = queryable().path('/optional/path/to_save/or_load/from.json').data(json_array_or_string)
-db.load()
+# load from file
+db = queryable().path('/optional/path/to_save/or_load/from.json').load()
+    OR
+db = queryable().load(path='/optional/path/to_save/or_load/from.json')
 
-res = db.find() # returns a db_result
-                # db_result contains the rows matching find() parms
-                # and the methods to sort().limit().skip() -- methods can be chained
+# pre-populate with data
+db = queryable().data(json-array_or_json-string)
+
+res = db.find({'key':'value'})
+        # returns a db_result
+        # db_result contains the rows that match find() params
+        # the methods to sort().limit().skip() -- methods can be chained
+# can use regex values
+res = db.find({'key':re.compile('^[0-9]+value')})
+
 db.update()
 db.remove()
 db.save()
@@ -102,7 +111,7 @@ class queryable:
                             '$in': lambda a, b: a in b,
                             '$nin': lambda a, b: a not in b}
 
-    def path(self, _path=False):
+    def path(self, _path):
         if _path:
             self._path = _path
         return self
@@ -121,14 +130,14 @@ class queryable:
                     row[ self.auto_index ] = self.new_index()
         return self
 
-    def load(self, _path=False):
-        self.path(_path)
+    def load(self, path=False):
+        self.path(path)
         with open(self._path, 'r') as f:
             self._data = json.load(f)
         return self
 
-    def save(self, _path=False):
-        self.path(_path)
+    def save(self, path=False):
+        self.path(path)
         with open(self._path, 'w') as f:
             f.write( json.dumps(self._data, **self._jsonarg) )
         return self
