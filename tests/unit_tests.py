@@ -6,7 +6,7 @@ import json
 
 sys.path.append(os.path.realpath('.'))
 sys.path.append(os.path.realpath('..'))
-from Queryable import db_object
+from Queryable import queryable
 
 p = lambda s: print(str(s))
 
@@ -24,7 +24,7 @@ def oareq( x, y ):
 
 def print_inserts(self):
     _Y = lambda t,o: int(str(t)+str(o))
-    db = db_object()
+    db = queryable()
     for T in range(10):
         db.clear()
         s = '['
@@ -46,7 +46,7 @@ def print_inserts(self):
 
 class QueryableTests(unittest.TestCase):
     def test_exists(self):
-        db = db_object()
+        db = queryable()
         db.insert({'a':1,'b':2})
         db.insert({'b':2,'c':3})
         db.insert({'c':3,'d':4})
@@ -67,7 +67,7 @@ class QueryableTests(unittest.TestCase):
         p('SORTING, INSERT')
 
     def test_sorting_int(self):
-        db = db_object()
+        db = queryable()
         for x in [3, 5, 1, 4, 2]:
             db.insert( {'a':x} )
 
@@ -86,22 +86,22 @@ class QueryableTests(unittest.TestCase):
         p('SORTING, INT')
 
     def test_sorting_str(self):
-        db = db_object(auto_index='').insert([{'a':'A'},{'a':'2'},{'a':'a'},{'a':'c'}])
+        db = queryable(auto_index='').insert([{'a':'A'},{'a':'2'},{'a':'a'},{'a':'c'}])
         res = db.find({'a':re.compile('.*')}).sort({'a':-1})
         self.assertEqual(res.data, [{'a': 'c'}, {'a': 'a'}, {'a': 'A'}, {'a': '2'}])
         p('SORTING, STR')
 
     def test_remove(self):
-        db = db_object(auto_index='').insert([{'a':3},{'a':5},{'b':2},{'a':1}])
+        db = queryable(auto_index='').insert([{'a':3},{'a':5},{'b':2},{'a':1}])
         res = db.remove({'a':{'$exists':True}})._data
         self.assertEqual(res, [{'b':2}] )
-        db = db_object(auto_index='').insert([{'a':3},{'a':5},{'b':2},{'a':1}])
+        db = queryable(auto_index='').insert([{'a':3},{'a':5},{'b':2},{'a':1}])
         res = db.remove({'a':{'$exists':False}})._data
         self.assertEqual(res, [{'a': 3}, {'a': 5}, {'a': 1}] )
         p('REMOVE')
 
     def test_or(self):
-        db = db_object(auto_index='').insert([{'a':1},{'b':2},{'c':3},{'a':4}])
+        db = queryable(auto_index='').insert([{'a':1},{'b':2},{'c':3},{'a':4}])
         r = re.compile('.*')
         self.assertEqual( db.find({'$or':[{'a':r},{'b':2}]}).data, \
                             [{'a': 1}, {'b': 2}, {'a': 4}] )
@@ -109,13 +109,13 @@ class QueryableTests(unittest.TestCase):
 
     def test_and(self):
         M = {'a':1,'b':2,'c':3,'d':4}
-        db = db_object(auto_index='').insert(M)
+        db = queryable(auto_index='').insert(M)
         res = db.find(M)
         self.assertEqual( res.data, [M] )
         p('AND')
 
     def test_in(self):
-        db = db_object(auto_index='').insert([{'a':3},{'a':5},{'b':2},{'a':1,'z':'meh'}])
+        db = queryable(auto_index='').insert([{'a':3},{'a':5},{'b':2},{'a':1,'z':'meh'}])
         res = db.find({'a':{'$in':[2,3,5]}})
         self.assertEqual( res.data, [{'a': 3}, {'a': 5}] )
         res = db.find({'$or':[{'b':{'$in':[2]}},{'a':{'$in':[1]}}]})
@@ -123,16 +123,15 @@ class QueryableTests(unittest.TestCase):
         p('IN')
 
     def test_nin(self):
-        db = db_object(auto_index='').insert([{'a':3},{'a':5},{'a':2},{'a':'meh'}])
+        db = queryable(auto_index='').insert([{'a':3},{'a':5},{'a':2},{'a':'meh'}])
         res = db.find({'a':{'$nin':[2,3,5]}})
         self.assertEqual(res.data, [{'a':'meh'}])
         res = db.find({'a':{'$nin':[1]}})
         self.assertEqual(res.data, [{'a':3},{'a':5},{'a':2},{'a':'meh'}])
         p('NIN')
-        pass
 
     def test_lt(self):
-        db = db_object(auto_index='').insert([{'a':3},{'a':5},{'b':2},{'a':1,'z':'meh'}])
+        db = queryable(auto_index='').insert([{'a':3},{'a':5},{'b':2},{'a':1,'z':'meh'}])
         for i in range(10):
             db.insert({'x':i})
         res = db.find({'x':{"$lt":3}})
@@ -140,7 +139,7 @@ class QueryableTests(unittest.TestCase):
         p('LT')
 
     def test_lte(self):
-        db = db_object(auto_index='').insert([{'a':3},{'a':5},{'b':2},{'a':1,'z':'meh'}])
+        db = queryable(auto_index='').insert([{'a':3},{'a':5},{'b':2},{'a':1,'z':'meh'}])
         for i in range(10):
             db.insert({'x':i})
         res = db.find({'x':{"$lte":3}})
@@ -148,28 +147,25 @@ class QueryableTests(unittest.TestCase):
         p('LTE')
 
     def test_gt(self):
-        db = db_object(auto_index='').insert([{'x':1,'n':'one'},{'x':1.5,'n':'one point five'},{'x':'two','n':2}])
+        db = queryable(auto_index='').insert([{'x':1,'n':'one'},{'x':1.5,'n':'one point five'},{'x':'two','n':2}])
         res = db.find({'x':{'$gt':1}})
         self.assertEqual(res.data, [{'x':1.5,'n':'one point five'}])
         p('GT')
-        pass
 
     def test_gte(self):
-        db = db_object(auto_index='').insert([{'x':1,'n':'one'},{'x':1.5,'n':'one point five'},{'x':'two','n':2}])
+        db = queryable(auto_index='').insert([{'x':1,'n':'one'},{'x':1.5,'n':'one point five'},{'x':'two','n':2}])
         res = db.find({'x':{'$gte':1.000}})
         self.assertEqual(res.data, [{'x':1,'n':'one'},{'x':1.5,'n':'one point five'}])
         p('GTE')
-        pass
 
     def test_ne(self):
-        db = db_object(auto_index='').insert([{'x':1},{'x':1.0},{'x':1.01},{'x':'1'}])
+        db = queryable(auto_index='').insert([{'x':1},{'x':1.0},{'x':1.01},{'x':'1'}])
         res = db.find({'x':{'$ne':1}})
         self.assertEqual(res.data, [{'x':1.01}, {'x':'1'}])
         p('NE')
-        pass
 
     def test_regex(self):
-        db = db_object(auto_index='').insert([{'x':'fred'},{'x':'dead'},{'x':256},{'x':'leded'}])
+        db = queryable(auto_index='').insert([{'x':'fred'},{'x':'dead'},{'x':256},{'x':'leded'}])
         res = db.find({'x':re.compile('.*ead')})
         self.assertEqual(res.data, [{'x':'dead'}])
         res = db.find({'x':re.compile('.*ed.*')})
@@ -183,20 +179,33 @@ class QueryableTests(unittest.TestCase):
         res = db.find({'x':re.compile('^[a-z]{4}$')})
         self.assertEqual(res.data, [{'x':'fred'},{'x':'dead'}])
         p('REGEX')
-        pass
 
     def test_update(self):
-        p('XXX - UPDATE - XXX')
-        pass
+        db = queryable().data([{'x':1},{'x':1.0}])
+        db.update({'x':1},{'$set':{'x':666}})
+        res = db.find({'x':re.compile('.*')})
+        self.assertEqual(res.data, [{'x':666,'_id':1},{'x':1.0,'_id':2}])
+        db = queryable().data([{'x':1},{'x':1.0}])
+        db.update({'x':1},{'$set':{'x':666}},{'multi':True})
+        res = db.find({'x':re.compile('.*')})
+        self.assertEqual(res.data, [{'x':666,'_id':1},{'x':666,'_id':2}])
+        db.update({'b':1},{'$set':{'b':777}},{'upsert':False})
+        self.assertEqual(db._data, [{'x':666,'_id':1},{'x':666,'_id':2}])
+        db.update({'b':1},{'$set':{'b':777}},{'upsert':True})
+        self.assertEqual(db._data, [{'x':666,'_id':1},{'x':666,'_id':2},{'b':777,'_id':3}])
+        p('UPDATE')
 
-    def test_upsert(self):
-        p('XXX - UPSERT - XXX')
-        pass
-
+    # just distinct k,v sets:  a:1, a:0, a:1, a:0 --> a:1, a:0
     def test_distinct(self):
-        p('XXX - DISTINCT - XXX')
-        pass
-
+        M = [{'a':1},{'a':0},{'a':1},{'a':0}]
+        VIRGIN = [{'a':1},{'a':0},{'a':1},{'a':0}]
+        db = queryable(auto_index='').data( M )
+        res = db.distinct('a')
+        self.assertEqual(db._data, M)
+        self.assertEqual(res.data, [{'a':1},{'a':0}])
+        res.data[0]['a'] = 666 # make sure changing result isn't the same python object as main set
+        self.assertEqual(db._data, VIRGIN)
+        self.assertEqual(res.data, [{'a':666},{'a':0}])
 
 if __name__ == '__main__':
     unittest.main()

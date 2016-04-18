@@ -16,9 +16,9 @@ possible number of manipulations to get your data into and out
 of the JSON array.
 
 USAGE:
-from Queryable import db_object
+from Queryable import queryable
 
-db = db_object().path('/optional/path/to_save/or_load/from.json').data(json_array_or_string)
+db = queryable().path('/optional/path/to_save/or_load/from.json').data(json_array_or_string)
 db.load()
 
 res = db.find() # returns a db_result
@@ -32,13 +32,14 @@ db.save()
 import json
 import re
 from operator import attrgetter
+import copy
 
 class db_result:
     def __init__(self, init_data):
         if type(init_data) is type([]):
-            self.data = init_data
+            self.data = copy.deepcopy(init_data)
         elif type(init_data) is type({}):
-            self.data = [ init_data ]
+            self.data = [ copy.deepcopy(init_data) ]
         else:
             raise Exception('db_result: bad input')
 
@@ -73,11 +74,7 @@ class db_result:
         return json.dumps(self.data, **xa)
 
 
-class db_object:
-    """
-    db_object requires a path to save
-    """
-
+class queryable:
     def __init__(self,compact=True, auto_index='_id'):
         self._id = 0
         self._path = ''
@@ -105,29 +102,33 @@ class db_object:
                             '$in': lambda a, b: a in b,
                             '$nin': lambda a, b: a not in b}
 
-    def path(self, _path):
-        self._path = _path
+    def path(self, _path=False):
+        if _path:
+            self._path = _path
         return self
 
     def data(self, _data):
-        if type(_data) is type(''):
-            self._data = json.loads(_data)
-        elif type(_data) is type([]):
-            self._data = _data
-        else:
-            raise Exception('db_object: bad input, must be list of dict or json string')
+        if _data is not False:
+            if type(_data) is type(''):
+                self._data = json.loads(_data)
+            elif type(_data) is type([]):
+                self._data = _data
+            else:
+                raise Exception('queryable: bad input, must be list of dict or json string')
+        if self.auto_index and self._data:
+            for row in self._data:
+                if self.auto_index not in row:
+                    row[ self.auto_index ] = self.new_index()
         return self
 
     def load(self, _path=False):
-        if _path:
-            self._path = _path
+        self.path(_path)
         with open(self._path, 'r') as f:
             self._data = json.load(f)
         return self
 
     def save(self, _path=False):
-        if _path:
-            self._path = _path
+        self.path(_path)
         with open(self._path, 'w') as f:
             f.write( json.dumps(self._data, **self._jsonarg) )
         return self
@@ -145,7 +146,7 @@ class db_object:
         elif type(row_or_ary) is type({}):
             insert_one(self, row_or_ary)
         else:
-            raise Exception('db_object: insert: bad type')
+            raise Exception('queryable: insert: bad type')
         return self
 
     def new_index(self):
@@ -276,7 +277,7 @@ class db_object:
 
 
     def do_query(self, master, clauses):
-        result = master[:]
+        result = master
         for key, val in clauses.items():
             _t = self.detect_clause_type(key, val)
             if _t == 'NORMAL':
@@ -293,19 +294,56 @@ class db_object:
     def clear(self):
         self._id = 0
         self._data = []
-
-    def update(self, constraint, operand):
-        matched = self.do_query(self._data, constraint)
-        return self
-
-    def distinct(self):
-        #do_query
         return self
 
     def remove(self, constraints):
         for matched in self.do_query(self._data, constraints):
             self._data.remove(matched)
         return self
+
+    def update(self, query, update, options=None):
+        do_upsert = True if options and options.get('upsert') else False
+        do_multi = True if options and options.get('multi') else False
+        _set = update['$set'] # error if doesn't have it
+        matched = self.do_query(self._data, query)
+        if len(matched) == 0 and do_upsert:
+            self.insert(_set)
+            return self
+        did_change = False
+        for row in matched:
+            for key, val in _set.items():
+                if not row.get(key) or row[key] != val:
+                    row[key] = val
+                    did_change = True
+            if not do_multi and did_change:
+                break # default is do only one row
+        return self
+
+    def distinct(self, key, clause=None):
+        assert type(key) is type('')
+
+        if clause is not None:
+            res = self.do_query(self._data, clause)
+        else:
+            res = self._data
+
+        # thin out to every row that has the key
+        haskey = []
+        for row in res:
+            if row.get(key) is not None:
+                haskey.append(row)
+
+        distinct_set = []
+        for keyrow in haskey:
+            not_in = True
+            for distinct_row in distinct_set:
+                if distinct_row[key] == keyrow[key]:
+                    not_in = False
+                    break
+            if not_in:
+                distinct_set.append(keyrow)
+
+        return db_result(distinct_set)
 
     def count(self):
         return len(self._data)
