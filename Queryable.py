@@ -89,6 +89,12 @@ class db_object:
         """
         compact:    set to false to save JSON in multi-line format for readability
         auto_index: can be unset to eliminate automaticly adding indexes into objects
+
+        3 ways to get data into db:
+            - data() - passes in raw and doesn't alter fields (won't inject _id)
+            - insert() - inserts each row, altering as normal (may inject _id)
+            - load() - loads from file. Read highest _id so subsequent inserts start at next
+
         """
         self._id = 0
         self._path = path if path else ''
@@ -150,6 +156,9 @@ class db_object:
         self.path(path)
         with open(self._path, 'r') as f:
             self._data = json.load(f)
+        for x in [row.get('_id') for row in self._data if row.get('_id') is not None]:
+            if x > self._id:
+                self._id = x
         return self
 
     def save(self, path=False, compact=None):
