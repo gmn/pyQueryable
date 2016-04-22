@@ -36,6 +36,10 @@ res = db.find({'key':re.compile('^[0-9]+value')})
 db.update()
 db.remove()
 db.save()
+
+TODO:
+- make correct methods @staticmethod and @classmethod
+- move comparators to class level 
 """
 
 import json
@@ -99,7 +103,7 @@ class db_object:
         self._id = 0
         self._path = path if path else ''
         self._data = data if data else []
-        self._jsonarg = {} if compact else {"indent":2}
+        self._jsonarg = {'separators':(',',':')} if compact else {"indent":2}
         self.auto_index = auto_index
 
         def verify(a,b):
@@ -170,7 +174,7 @@ class db_object:
         """
         self.path(path)
         if compact is not None:
-            self._jsonarg = {} if compact else {"indent":2}
+            self._jsonarg = {'separators':(',',':')} if compact else {"indent":2}
         with open(self._path, 'w') as f:
             f.write( json.dumps(self._data, **self._jsonarg) )
         return self
