@@ -16,15 +16,15 @@ possible number of manipulations to get your data into and out
 of the JSON array.
 
 USAGE:
-from Queryable import queryable
+from Queryable import db_object
 
 # load from file
-db = queryable().path('/optional/path/to_save/or_load/from.json').load()
+db = db_object().path('/optional/path/to_save/or_load/from.json').load()
     OR
-db = queryable().load(path='/optional/path/to_save/or_load/from.json')
+db = db_object().load(path='/optional/path/to_save/or_load/from.json')
 
 # pre-populate with data
-db = queryable().data(json-array_or_json-string)
+db = db_object().data(json-array_or_json-string)
 
 res = db.find({'key':'value'})
         # returns a db_result
@@ -140,7 +140,7 @@ class db_object:
             elif type(_data) is type([]):
                 self._data = _data
             else:
-                raise Exception('queryable: bad input, must be list of dict or json string')
+                raise Exception('db_object: bad input, must be list of dict or json string')
         if self.auto_index and self._data:
             for row in self._data:
                 if self.auto_index not in row:
@@ -197,7 +197,7 @@ class db_object:
         elif type(row_or_ary) is type({}):
             insert_one(self, row_or_ary)
         else:
-            raise Exception('queryable: insert: bad type')
+            raise Exception('db_object: insert: bad type')
         return self
 
     def new_index(self):
