@@ -39,7 +39,7 @@ db.save()
 
 TODO:
 - make correct methods @staticmethod and @classmethod
-- move comparators to class level 
+- move comparators to class level
 """
 
 import json
@@ -89,21 +89,28 @@ class db_result:
 
 
 class db_object:
-    def __init__(self,compact=True, auto_index='_id', path=None, data=None):
+    def __init__(self, jsonarg=None, auto_index='_id', path=None, data=None):
         """
-        compact:    set to false to save JSON in multi-line format for readability
-        auto_index: can be unset to eliminate automaticly adding indexes into objects
+        jsonarg:    Set json output attributes, else if True yields human readable.
+                    Default is minified
+
+        auto_index: Can override default automatic index. Default: '_id'
 
         3 ways to get data into db:
-            - data() - passes in raw and doesn't alter fields (won't inject _id)
+            - data()   - passes in raw and doesn't alter fields (won't inject _id)
             - insert() - inserts each row, altering as normal (may inject _id)
-            - load() - loads from file. Read highest _id so subsequent inserts start at next
+            - load()   - loads from file. Read highest _id so subsequent inserts start at next
 
         """
         self._id = 0
         self._path = path if path else ''
         self._data = data if data else []
-        self._jsonarg = {'separators':(',',':')} if compact else {"indent":2}
+        if jsonarg is None:
+            self._jsonarg = {'separators':(',',':')}
+        elif type(jsonarg) is type({}):
+            self._jsonarg = jsonarg
+        else:
+            self._jsonarg = {'indent':2}
         self.auto_index = auto_index
 
         def verify(a,b):
@@ -165,18 +172,17 @@ class db_object:
                 self._id = x
         return self
 
-    def save(self, path=False, compact=None):
+    def save(self, path=False, jsonarg=None):
         """
         save to file.
 
         path:       Can optionally set the filepath
-        compact:    set to true or false to control how save operation writes the file
+        jsonarg:    can override json formatting arguments for this save if desired
         """
         self.path(path)
-        if compact is not None:
-            self._jsonarg = {'separators':(',',':')} if compact else {"indent":2}
+        ja = jsonarg if jsonarg is not None else self._jsonarg
         with open(self._path, 'w') as f:
-            f.write( json.dumps(self._data, **self._jsonarg) )
+            f.write( json.dumps(self._data, **jsonarg) )
         return self
 
     def insert(self, row_or_ary):
