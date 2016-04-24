@@ -84,7 +84,7 @@ p(db._data) # M) # make sure changing result isn't the same python object as mai
 p(res.data) # [{'a':666},{'a':0}])
 
 # sort dates
-db = db_object(compact=False)
+db = db_object(jsonarg=True) # human readable
 db.insert({'x':1, 'd':'now()'})
 db.insert({'x':2, 'd':'now()'})
 db.insert({'x':3, 'd':'now()'})

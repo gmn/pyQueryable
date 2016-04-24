@@ -83,8 +83,8 @@ class db_result:
     def count(self):
         return len(self.data)
 
-    def toString(self,min=False):
-        xa = {} if min else {'indent':2}
+    def toString(self,compact=False):
+        xa = {'separators':(',',':')} if compact else {'indent':2}
         return json.dumps(self.data, **xa)
 
 
@@ -135,7 +135,7 @@ class db_object:
 
     def path(self, _path):
         """
-        set the file path. must be fully qualified file path, not just directory
+        Set the file path. Must be fully qualified file path, not just directory
         """
         if _path:
             self._path = _path
@@ -143,7 +143,7 @@ class db_object:
 
     def data(self, _data):
         """
-        populate the database with data. Can be both/either string or ``list of dict''
+        Populate the database with data. Can be both/either string or ``list of dict''
         """
         if _data is not False:
             if type(_data) is type(''):
@@ -160,7 +160,7 @@ class db_object:
 
     def load(self, path=False):
         """
-        load from file.
+        Load from file.
 
         path: Can optionally set the filepath
         """
@@ -174,7 +174,7 @@ class db_object:
 
     def save(self, path=False, jsonarg=None):
         """
-        save to file.
+        Save to file.
 
         path:       Can optionally set the filepath
         jsonarg:    can override json formatting arguments for this save if desired
@@ -182,12 +182,12 @@ class db_object:
         self.path(path)
         ja = jsonarg if jsonarg is not None else self._jsonarg
         with open(self._path, 'w') as f:
-            f.write( json.dumps(self._data, **jsonarg) )
+            f.write( json.dumps(self._data, **ja) )
         return self
 
     def insert(self, row_or_ary):
         """
-        insert a row (dict), or array or rows (list of dict)
+        Insert a row (dict), or array or rows (list of dict)
         """
         def insert_one(self, row):
             assert type(row) is type({})
@@ -214,8 +214,8 @@ class db_object:
         self._id = self._id + 1
         return self._id
 
-    def toString(self,min=False):
-        xa = {} if min else {'indent':2}
+    def toString(self,compact=True):
+        xa = {'separators':(',',':')} if compact else {'indent':2}
         return json.dumps(self.data, **xa)
 
     def detect_clause_type(self, key, val):
@@ -286,7 +286,6 @@ class db_object:
             test.key: key
             test.val: {$ne:val}
             """
-            # FIXME: is this even necessary? Couldnt I just use the comparator $ne ?
             # add rows that don't contain test.key
             if cond == '$ne':
                 # see if row contains test.key at all, if not add it
@@ -350,7 +349,7 @@ class db_object:
 
     def find(self, match=None):
         """
-        return all rows matching query
+        Return all rows matching query
         """
         if match is None:
             return db_result(self._data)
@@ -358,7 +357,7 @@ class db_object:
 
     def clear(self):
         """
-        erase the internal database
+        Erase the internal database
         """
         self._id = 0
         self._data = []
@@ -366,7 +365,7 @@ class db_object:
 
     def remove(self, constraints):
         """
-        remove all rows from database that match the query
+        Remove all rows from database that match the query
         """
         for matched in self.do_query(self._data, constraints):
             self._data.remove(matched)
@@ -374,10 +373,12 @@ class db_object:
 
     def update(self, query, update, options=None):
         """
-        update all items matching query,
-        set their keys to any in update object, as: {"$set":{key:val}}
-        set multi:True to update multiple rows: options => {'multi':True}
-        set upsert:True to insert if row query is missing => {'upsert':True}
+        Update all items matching query
+
+        query:   contraints to select matching rows
+        update:  set their keys to any in update object, as: {"$set":{key:val}}
+        options: set {'multi':True} to update multiple rows
+                 set {'upsert':True} to insert the update if row does not exist
         """
         do_upsert = True if options and options.get('upsert') else False
         do_multi = True if options and options.get('multi') else False
