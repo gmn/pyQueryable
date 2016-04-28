@@ -430,3 +430,7 @@ class db_object:
     def count(self):
         return len(self._data)
 
+    def recompute_indexes(self):
+        self._id = 0 # reset doled out _id
+        for row in sorted(self._data, key=lambda x:x['_id']): # make sure _id is sorted
+            row[ self.auto_index ] = self.new_index() # set adjacent ids
