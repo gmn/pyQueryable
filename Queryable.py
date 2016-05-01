@@ -133,13 +133,16 @@ class db_object:
                             '$in': lambda a, b: a in b,
                             '$nin': lambda a, b: a not in b}
 
-    def path(self, _path):
+    def setPath(self, _path):
         """
         Set the file path. Must be fully qualified file path, not just directory
         """
         if _path:
             self._path = _path
         return self
+
+    def path(self):
+        return self._path
 
     def data(self, _data):
         """
@@ -164,9 +167,20 @@ class db_object:
 
         path: Can optionally set the filepath
         """
-        self.path(path)
-        with open(self._path, 'r') as f:
-            self._data = json.load(f)
+        self.setPath(path)
+
+        # try reading the path, if not found write initial data instead of throwing error
+        # we need to know if it is a bad path, or we set our path incorrectly. Not if we can't
+        # open it the first time because its not there. Forcing behavior where we .save().load() in the
+        # client is stupid--and dangerous--so we'll do it here for them instead
+        try:
+            with open(self._path, 'r') as f:
+                self._data = json.load(f)
+        except:
+            self.save()
+            with open(self._path, 'r') as f:
+                self._data = json.load(f)
+
         for x in [row.get('_id') for row in self._data if row.get('_id') is not None]:
             if x > self._id:
                 self._id = x
@@ -179,7 +193,7 @@ class db_object:
         path:       Can optionally set the filepath
         jsonarg:    can override json formatting arguments for this save if desired
         """
-        self.path(path)
+        self.setPath(path)
         ja = jsonarg if jsonarg is not None else self._jsonarg
         with open(self._path, 'w') as f:
             f.write( json.dumps(self._data, **ja) )
