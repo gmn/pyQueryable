@@ -322,10 +322,6 @@ class db_object:
                             res.append(row)
                             break
 
-            # remove the key:value from test object
-            if cond:
-                test['val'].remove(test['val'].get('cond'))
-
         return res
 
     def match_rows_OR(self, rows, array):
