@@ -404,8 +404,11 @@ class db_object:
         did_change = False
         for row in matched:
             for key, val in _set.items():
-                if not row.get(key) or row[key] != val:
-                    row[key] = val
+                if not row.get(key) or row[key] != val or val == 'now()':
+                    if val == 'now()':
+                        row[key] = datetime.strftime(datetime.now(),'%Y-%m-%dT%H:%M:%S.%f%z')
+                    else:
+                        row[key] = val
                     did_change = True
             if not do_multi and did_change:
                 break # default is do only one row
