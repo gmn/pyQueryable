@@ -321,6 +321,11 @@ class db_object:
                         if compare(row[key], test['val'].get(cond)):
                             res.append(row)
                             break
+
+            # remove the key:value from test object
+            if cond:
+                test['val'].remove(test['val'].get('cond'))
+
         return res
 
     def match_rows_OR(self, rows, array):
@@ -340,13 +345,17 @@ class db_object:
                         if row.get(test['key']) is not None and \
                                 test['val'].match(str(row[test['key']])):
                             res.append(row)
+                            break # goto scanning next row so we dont double add this one
                     elif row.get(test['key']) == test['val']:
                         res.append( row )
+                        break # goto scanning next row so we dont double add this one
                 elif _t == "CONDITIONAL":
                     firstkey = list(test['val'].keys())[0]
                     compare = self.comparators.get(firstkey)
                     if compare and compare(row.get(test['key']), test['val'].get(firstkey)):
                         res.append(row)
+                        break # goto scanning next row so we dont double add this one
+
         return res
 
     def do_query(self, master, clauses):
