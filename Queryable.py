@@ -336,7 +336,7 @@ class db_object:
                 test = { "key": eltkey, "val": eltval }
 
                 _t = self.detect_clause_type( eltkey, eltval )
-                if _t == 'NORMAL':
+                if _t == 'NORMAL' or _t == 'SUBDOCUMENT': # <- subdoc is hack until we implement handling case
                     if type(test['val']) is type(re.compile('')):
                         if row.get(test['key']) is not None and \
                                 test['val'].match(str(row[test['key']])):
@@ -358,7 +358,7 @@ class db_object:
         result = master
         for key, val in clauses.items():
             _t = self.detect_clause_type(key, val)
-            if _t == 'NORMAL':
+            if _t == 'NORMAL' or _t == 'SUBDOCUMENT': # <- sub is hack until we implement handling case
                 result = self.match_rows_NORMAL(result, {'key':key,'val':val})
             elif _t == 'CONDITIONAL':
                 result = self.match_rows_CONDITIONAL(result, {'key':key,'val':val})
