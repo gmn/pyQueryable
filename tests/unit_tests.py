@@ -207,5 +207,15 @@ class QueryableTests(unittest.TestCase):
         self.assertEqual(db._data, VIRGIN)
         self.assertEqual(res.data, [{'a':666},{'a':0}])
 
+    def test_save_load(self):
+        orig_data = [{'x':'fred'},{'x':'dead'},{'x':256},{'x':'leded'}]
+        filename = 'test_generated_eraseme'
+        db = db_object(path=filename).insert(orig_data).save()
+        db = db_object().setPath(filename).load()
+        res = db.find()
+        self.assertEqual(res.data, orig_data)
+        db = db_object().load(path=filename)
+        self.assertEqual(db._data, orig_data)
+
 if __name__ == '__main__':
     unittest.main()

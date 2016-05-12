@@ -19,7 +19,7 @@ USAGE:
 from Queryable import db_object
 
 # load from file
-db = db_object().path('/optional/path/to_save/or_load/from.json').load()
+db = db_object().setPath('/optional/path/to_save/or_load/from.json').load()
     OR
 db = db_object().load(path='/optional/path/to_save/or_load/from.json')
 
@@ -181,7 +181,7 @@ class db_object:
             with open(self._path, 'r') as f:
                 self._data = json.load(f)
 
-        for x in [row.get('_id') for row in self._data if row.get('_id') is not None]:
+        for x in (row.get('_id') for row in self._data if row.get('_id') is not None):
             if x > self._id:
                 self._id = x
         return self
