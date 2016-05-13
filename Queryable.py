@@ -22,6 +22,8 @@ from Queryable import db_object
 db = db_object().setPath('/optional/path/to_save/or_load/from.json').load()
     OR
 db = db_object().load(path='/optional/path/to_save/or_load/from.json')
+    OR
+db = db_object(path='/optional/path/to_save/or_load/from.json').load()
 
 # pre-populate with data
 db = db_object().data(json-array_or_json-string)
@@ -168,11 +170,14 @@ class db_object:
         path: Can optionally set the filepath
         """
         self.setPath(path)
+        if not self._path:
+            raise Exception('** error: Path not set')
+            return
 
-        # try reading the path, if not found write initial data instead of throwing error
-        # we need to know if it is a bad path, or we set our path incorrectly. Not if we can't
-        # open it the first time because its not there. Forcing behavior where we .save().load() in the
-        # client is stupid--and dangerous--so we'll do it here for them instead
+        # Try reading the path, if not found write initial data instead of throwing error.
+        # We need to know if it is a bad path, or we set our path incorrectly. Not if we can't
+        # open it the first time because its not there. Forcing behavior where we .save().load()
+        # in the client is stupid, so we'll do it for them here instead
         try:
             with open(self._path, 'r') as f:
                 self._data = json.load(f)
