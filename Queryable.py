@@ -200,8 +200,12 @@ class db_object:
         """
         self.setPath(path)
         ja = jsonarg if jsonarg is not None else self._jsonarg
-        with open(self._path, 'w') as f:
-            f.write( json.dumps(self._data, **ja) )
+        try:
+            formatted = json.dumps(self._data, **ja)
+            with open(self._path, 'w') as f:
+                f.write(formatted)
+        except:
+            pass # catch so badly formatted json doesn't overwrite & erase db
         return self
 
     def insert(self, row_or_ary):
