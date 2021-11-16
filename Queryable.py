@@ -89,6 +89,9 @@ class db_result:
         xa = {'separators':(',',':')} if compact else {'indent':2}
         return json.dumps(self.data, **xa)
 
+    def empty(self):
+        return self.count() == 0
+
 
 class db_object:
     def __init__(self, jsonarg=None, auto_index='_id', path=None, data=None):
